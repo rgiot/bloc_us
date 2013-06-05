@@ -1,0 +1,392 @@
+    
+                                CATaclysme 1.2a
+
+                        Une production GPA (c) 2004/05
+
+                            revision du 12/06/2005
+
+
+Introduction
+
+Quoi de neuf ?
+
+1) Principe de fonctionnement du logiciel
+
+2) Syntaxe du listing Basic
+
+3) Limites de CATaclysme
+
+4) Pour aller plus loin...
+ Structure d'une entree de catalogue detournee
+ Les restrictions liees a l'affichage du catalogue
+
+Credits et remerciements
+
+                            ***************************
+
+CATaclysme est un logiciel qui permet de creer des "catalogues detournes" avec 
+un minimum d'efforts et des connaissances minimalistes en Basic. 
+Qu'est-ce qu'un catalogue detourne ? C'est un catalogue particulier, 
+evidemment stocke sur disquette, qui, au lieu d'afficher des noms de 
+fichiers, execute des commandes !
+
+Concretement, quand vous tapez la commande CAT, l'ecran s'efface, les couleurs 
+et le mode graphique changent, et un beau message s'affiche ! Cette technique 
+a tres souvent ete utilisee par les editeurs de jeux (Ere informatique, Chip, 
+U.s.Gold) et les demo-makers (Voyage 93, The Demo, Face Hugger Megademo).
+
+Comment ce petit miracle est-il possible ? Nous le devons au vecteur &BB5A du
+CPC. Cette routine, utilisee par le CPC pour afficher le catalogue, interprete
+comme des commandes les caracteres dont la valeur ASCII est inferieure a 32.
+Pour plus d'informations, lisez "Le guide de l'utilisateur", chapitre 7 page 3 
+(pour un CPC 6128).
+
+Temperons nos ardeurs, il n'est malheureusement pas possible de faire tout et 
+n'importe quoi avec ces caracteres de commandes.  Certains sont tout bonnement 
+inexploitables dans un catalogue (25, 23). Il faut egalement tenir compte des 
+nombreuses contraintes liees au fait que le CPC essaie d'afficher un catalogue 
+de disquette, informations que nous aborderons par la suite.
+
+
+Quoi de neuf ?
+--------------
+La version 1.1 de CATaclysme apporte deux nouveautes en mode LOCATE. Il est
+desormais possible de forcer la commande PEN sur chaque entree affichee, ce
+qui permet de faires des presentations multicolores facilement.
+CATaclysme gere maintenant correctement le positionnement du curseur en
+fin de presentation, toujours en mode LOCATE. 
+A noter que l'option PEN force est une requete de Sylvestre, le seul
+utilisateur de CATaclysme sur Terre, semble t'il :-).
+
+
+La version 1.2 n'apporte rien, si ce n'est la compatibilite CPC 464 et la
+correction d'un petit bug "mangeant" eventuellement la derniere entree 
+d'une presentation.
+Consultez quand meme la section "Limites" de Cataclysme, on y decouvre que
+le CPC 464 a une methode bien a lui d'afficher un catalogue...
+
+La version 1.2a a ete creee a la demande de Pulko Mandy. La commande PRINT"
+est maintenant supportee (avant, seul PRINT " l'etait). Le programme peut
+ecrire des catalogues au format D10 de Parados (128 entrees, secteurs du
+catalogue numerotes de &11 a &18). Je ne suis pas sur que cette derniere
+fonctionnalite serve a grand monde, mais bon, si ca peut faire plaisir :-).
+
+
+Apres cette succinte introduction, voyons comment fonctionne CATaclysme.
+
+
+
+1) Principe de fonctionnement du logiciel
+-------------------------------------------
+
+CATaclysme se compose de deux modules distincts :
+
+1) un interpreteur de fichier ASCII
+ Ce programme lit un fichier Basic sauvegarde en ASCII, analyse son 
+ contenu, et transforme les commandes reconnues en codes ASCII 
+ correspondants.
+
+2) Un module de generation du catalogue
+ Il lit les donnees creees en memoire par l'interpreteur et cree une 
+ structure de type catalogue en memoire. Une fois cette structure cree, 
+ le programme l'enregistre sur les quatre secteurs qu'occupe un 
+ catalogue standard.
+
+Pour generer un catalogue detourne, il vous faut, avant d'utiliser CATaclysme 
+creer un fichier Basic particulier qui "execute" votre presentation. 
+Un exemple ?
+
+ 100 MODE 1
+ 110 INK 0,0
+ 120 INK 1,24
+ 130 PAPER 0
+ 140 PEN 1
+ 150 LOCATE 13,12
+ 160 PRINT "CECI EST UN TEST"
+ 170 LOCATE 1,24
+
+Une fois le listing au point, il faut le sauvegarder en ASCII 
+(SAVE "PRESENT.TXT",A). Lancez ensuite le programme -CATA.BAS. Le premier 
+module vous demandera, en plus du nom du fichier source, deux informations :
+
+ * Correction de l'alignement vertical (-2 a 1) :
+   Permet de modifier l'alignement vertical de la presentation. 
+   La valeur saisie concerne les commandes LOCATE et WINDOW.
+
+ * Mode LOCATE (Y/N) :
+   Permet de creer une presentation generique, affichee correctement quel 
+   que soit le mode graphique. Ce mode implique de se limiter a des
+   affichages simples de textes, car on ne sait pas normalement dans quel
+   ordre le CPC va traiter les commandes.
+   Une exception a cette regle d'or : la premiere entree du catalogue
+   est toujours affichee en premier ! Il faut donc dans cette ligne
+   placer la commande effacant l'ecran.
+   Si le mode LOCATE n'est pas actif, le programme considere que le MODE 
+   1 est le mode implicite lorsque vous tapez la commande CAT. Si le
+   MODE reel est different, la presentation ne sera pas affichee dans
+   l'ordre pre-determinee par CATaclysme, ce qui se traduira la plupart
+   du temps par des effets etranges et illisibles a l'ecran !
+
+   La version 1.1 apporte deux ajouts importants en mode LOCATE. Il est 
+   possible de forcer sur chaque entree affichant du texte l'encre utilisee
+   (commande PEN).
+   Autre nouveaute : CATaclysme permet de forcer le positionnement du curseur
+   en position 1,24 a la fin de l'affichage. L'idee est de faire en sorte que
+   le nombre d'entrees catalogue a afficher soit un multiple de 4. Si cette
+   condition est remplie, la derniere entree affichee est la meme quel que
+   soit le mode graphique de depart !
+   CATaclysme va donc creer automatiquement des entrees vides supplementaires
+   et une derniere entree contenant une commande PEN et LOCATE.
+
+   Si la position 1,24 ne vous convient pas, vous pouvez le modifier soit
+   avec un editeur de secteurs, soit en modifiant le fichier CATA3.BAS.
+
+
+Le programme travaille tranquillement (vive le Basic !) puis vous propose 
+d'ecrire le catalogue detourne. Une fois le catalogue cree, tapez simplement 
+la commande CAT !
+
+Sur l'archive, vous trouverez quatre exemples de presentations illustrant les 
+possibilites de CATaclysme.
+
+ MODE0.TXT       : presentation en MODE 0 (pas en mode LOCATE), 
+                   utilisant l'instruction CHR$(x) pour afficher des 
+                   bandes de couleurs.
+
+ MODE1.TXT       : presentation en MODE 1 (pas en mode LOCATE) avec un 
+                   beau logo fait avec des commandes WINDOW.
+
+ MODE2.TXT       : presentation en MODE 2 (mode LOCATE) qui fonctionne 
+                   correctement quel que soit le mode graphique courant 
+                   avant de saisir la commande CAT.
+
+ FORCE1.TXT      : presentation en MODE 1 (mode LOCATE) utilisant l'option
+                   PEN force.
+
+Une fois que votre presentation est faite, peut-etre aimeriez vous copier des
+fichiers sur votre disquette. C'est tout a fait possible ! Il faut juste faire
+en sorte que ces fichiers ne soient pas affiches par le catalogue, en les
+masquant. Tout bon utilitaire de gestion de fichier est capable de ce genre
+de prouesse :-).
+
+
+2) Syntaxe du listing BASIC
+---------------------------
+
+Pour etre correctement interprete par CATaclysme, le listing Basic doit obeir 
+aux regles suivante :
+
+* une seule commande par ligne
+* pas d'utilisation de variables
+* les valeurs numeriques doivent etre saisie en decimal
+
+Le programme reconnait les instructions suivantes :
+
+ REM ou '         Afficher une remarque dans le listing. La ligne
+                  est bien evidemment non interpretee.
+ MODE a           Mode graphique 
+ PEN a            Selection de la couleur du texte
+ PAPER a          Selection de la couleur du fond
+ INK a,b,c        Definition d'une encre
+ BORDER a,b       Definition de la couleur de la bordure de l'icran
+ WINDOW a,b,c,d   Definition de la fenetre texte courante
+ PRINT            Affichage d'un texte (Attention, la commande se 
+                  comporte comme un PRINT "";
+ PRINT CHR$(x)    Affichage d'un ou d'une serie de caracteres. La 
+                  encore, la commande correspond a un PRINT CHR$(x);
+ CLS              Effacement de la fenetre courante
+ LOCATE x,y       Positionnement du curseur texte en colonne x ligne y
+
+Certaines commandes sont plus restrictives qu'en "pur" Basic :
+
+* On ne peut pas afficher des caracteres superieurs a 127. La commande sera
+  correctement interpretee, mais c'est le caractere (char-128) qui sera
+  affiche. Blamez la routine systeme de traitement du catalogue, qui fait
+  disparaitre le bit 7 de tous les octets affiches.
+
+* En mode LOCATE, a moins de savoir exactement ce que vous faites, il est peu 
+  conseille d'utiliser la commande WINDOW. La commande MODE doit etre la 
+  premiere utilisee dans le listing Basic. Il n'est pas non plus evident de 
+  changer la meme couleur plusieurs fois de suite, ni d'utiliser le mode 
+  transparent car vous ne savez pas quand les commandes sont executees.
+
+
+
+3) Limites liees a CATaclysme
+-----------------------------
+
+Vous ne pouvez pas utiliser le caractere " dans vos textes (il sert de
+separateur en Basic). Remplacez-le par un ' et jouez de l'editeur de secteurs
+si vous souhaitez absolument utiliser des guillemets une fois la presentation
+ecrite sur disque...
+
+CATaclysme n'a pas du tout ete prevu pour gerer l'affichage d'un catalogue
+detourne avec la commande |DIR. Cela n'a de reelle incidence qu'en MODE 2, ou
+le catalogue est alors affiche sur cinq colonnes. Voir a ce sujet le chapitre
+suivant. De toute maniere, personne n'utilise |DIR, alors bon...
+
+Les presentation en mode standard ne fonctionneront pas telles quelles. Le
+CPC 464 n'affiche pas comme ses freres un catalogue. A la fin de chaque
+"ligne" de fichiers, il fait un retour a la ligne suivante. Le probleme, c'est
+que ce retour n'est pas inhibe par le caractere &15. Un simple affiche de
+texte (voir l'exemple "464BAD.BAS") se traduit par un affichage deforme !
+CATaclysme ne prend pas en charge cette particularite.
+La solution ? Positionner de judicieuses commandes LOCATE dans le listing
+source aux endroits ou les caracteres sont decales. Regardez le listing
+464GOOD.BAS. la version corrigee du premier exemple.
+
+
+4) Pour aller plus loin...
+--------------------------
+
+Structure d'une entree catalogue detournee :
+********************************************
+
+En mode standard :
+------------------
+ 00 id 06 dd dd dd dd dd 17 dd dd 15 00 00 00 00
+ 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+ 06 = autoriser l'affichage.
+ 15 = interdire l'affichage : utile car le catalogue affichage des
+      blancs et la taille du fichier entre chaque nom.
+ 17 = commande ne faisant rien, mais necessitant un parametre. Elle
+      permet de masquer le point que le systeme affiche habituellement
+      entre le nom et l'extension du fichier.
+ id = numero d'index : permet d'ordonner de facon sequentielle les 
+      entrees.
+ dd = donnee
+
+
+En mode Locate :
+----------------
+ Entree si la commande PRINT est utilisee : 
+
+ 00 06 1F xx yy dd dd dd 17 dd dd 15 00 00 00 00
+ 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+ 06 = autoriser l'affichage.
+ 15 = interdire l'affichage : utile car le catalogue affichage des
+      blancs et la taille du fichier entre chaque nom.
+ 17 = commande ne faisant rien, mais necessitant un parametre. Elle
+      permet de masquer le point que le systeme affiche habituellement
+      entre le nom et l'extension du fichier.
+ 1F = code ASCII de la commande LOCATE
+ xx & yy : parametres de la commande LOCATE
+
+
+ Entree si la commande PRINT n'est pas utilisee
+
+ 00 06 dd dd dd dd dd dd 17 dd dd 15 00 00 00 00
+ 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+Il est evidement possible d'optimiser cette structure en fonction des 
+commandes utilisees, CATaclysme ne pretend pas etre l'ultime generateur de
+catalogue detournes !
+
+
+Entree si l'option PEN force est activee
+
+00 06 1F xx yy 0F pp dd 17 dd dd 15 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+Cela limite evidemment la longueur des textes saisis, mais au moins, vous
+pouvez changer la couleur d'ecriture sans effet secondaire.
+
+
+Les restrictions liees a l'affichage du catalogue
+*************************************************
+
+* En fonction du mode graphique en cours au moment ou vous lancez la commande
+  CAT, le catalogue de la disquette sera affichee sur une colonne (MODE 0),
+  deux colonnes (MODE 1) ou quatre colonnes (MODE 2).
+  Le CPC effectue un tri alphabetique des fichiers, puis les affiche par 
+  colonne ! Cette facon de proceder explique pourquoi le CPC n'affiche pas de 
+  facon sequentielle les entrees du catalogue, et qu'une presentation prevue
+  pour fonctionner dans un mode graphique ne fonctionne pas dans un autre
+  MODE. 
+
+  CATaclysme essaie de resoudre cette equation de deux manieres differentes :
+
+  - Il utilise un octet d'indexation pour chaque entree du catalogue, ce qui
+    permet de determiner quand le CPC traitera les commandes chaque entree.
+    Cela ne permet pas de resoudre le probleme du MODE de depart, mais evite
+    d'avoir a se triturer les meninges pour savoir si le CPC va executer
+    telle commande avant telle autre.
+
+  - Le curseur est systematiquement positionne a un endroit precis de l'ecran
+    au debut de chaque entree. C'est le mode LOCATE, qui s'affranchit lui de
+    toute notion d'indexation. Revers de la medaille, il offre fatalement
+    moins de possibilites que le mode indexe.
+
+* La routine d'affichage du catalogue insere un point entre le nom et 
+  l'extension du fichier. Elle rajoute a la fin du fichier sa taille. Ces
+  informations parasites doivent etre "effacees" ou inhibees afin que 
+  l'affichage ne soit pas perturbe.
+
+  Il existe plusieurs methodes pour supprimer le point. La plus simple
+  consiste a desactiver/reactiver l'affichage, mais cela "prend" deux 
+  octets. On peut se servir de la commande CHR$(8), mais il faut alors etre
+  sur qu'un caractere sera affiche apres le CHR$(8).
+  La methode la plus elegante, trouvee par Sylvestre, consiste a utiliser
+  la commande CHR$(23). Pour l'affichage du catalogue, elle n'a aucun effet
+  mais necessite un parametre ! Place juste a la fin du nom du fichier, 
+  elle empeche donc le point de s'afficher !
+
+  Pour eviter l'affichage de la taille du fichier, le plus simple est de
+  se servir des commandes pour desactiver l'affichage ( CHR$(21) ) puis le
+  reactiver lorsque le besoin s'en fait sentir ( CHR$(6) ).
+  En pratique, il est fortement conseille d'activer l'affichage au debut 
+  de chaque entree, car toutes les commandes manipulant la position du
+  curseur texte en ont besoin (LOCATE, etc...).
+
+* Le systeme ne permet pas d'afficher des caracteres ASCII superieurs a 127.
+
+   Aucun moyen de contourner cette limitation. Maigre consolation, on peut
+   afficher les caracteres 0 a 31. Ils ne sont pas grandioses, mais bon...
+
+* Les commandes ne peuvent pas etre a cheval sur deux entrees catalogue.
+
+   Si votre commande "deborde" d'une ligne, elle ira chercher les parametres
+   dont elle a besoin dans les caracteres affiches par le CPC a la suite du
+   nom de fichier ! Ceci peut s'averer un moyen tordu d'optimisation 
+   (n'est ce pas, Sylvestre !). 
+   CATaclysme ne gere pas ce genre de bidouille, et remplit avec des 00 les 
+   zones trop petites pour contenir des commandes.
+
+* Les commandes SYMBOL (CHR$(&19)), CHR$(&5), CHR$(17) ne sont pas 
+  utilisables.
+  
+  - CHR$(&5) et CHR$(&17) car le mode graphique ne peut pas etre active  
+  
+  - SYMBOL pour de multiples raisons : table des caracteres initialisee par
+    defaut pas le CPC en SYMBOL AFTER 240, parametres de la commande ne tenant
+    pas sur une entree catalogue, impossibilite d'utiliser des valeurs 
+    superieures a 127, etc... 
+
+
+
+Credits et remerciements
+------------------------
+CATaclysme a ete programme par Tom et Jerry / GPA. Ce logiciel a ete developpe 
+en un temps assez court (environ un mois), ce qui explique son interface 
+deplorable et ses capacites limitees :-). 
+
+Un grand merci a Super Sylvestre, qui m'a encourage fortemment (harcele ?) a
+creer ce programme. Cette idee m'avait deja ete suggeree par Iron lors de
+l'Amstrad Expo 2004, mais a l'epoque, j'avais juge le sujet sans reel interet 
+apres avoir teste un generateur de catalogues en assembleur assez minable.
+C'est grace a Super Sylvestre que je me suis apercu que finalement, cet
+aspect etrange du CPC s'avere digne de consideration.  
+
+Salutation a tous les survivants du CPC, en particulier a mes collegues
+d'infortunes Tronic et Tenebros, qui eux aussi, dans leurs antres, nous 
+concoctent surement des programmes d'enfer :-)).
+                Une production GPA (c) 2004/05
+
+              j'avais juge le sujet sans reel interet 
+apres avoir teste un generateur de catalogues en assembleur assez minable.
+C'est grace a Super Sylvestre que je me suis apercu que finalement, cet
+aspect etrange du CPC s'avere digne de consideration.  
+
+Saluta

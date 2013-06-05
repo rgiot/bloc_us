@@ -1,0 +1,5 @@
+AMSDOS
+.SCR_GET_MODE       equ 0xBC11
+.SCR_GET_INK        equ 0xBC35
+.SCR_GET_BORDER     equ 0xBC3B
+.SCR_GET_FLASHING   equ 0xBC41
